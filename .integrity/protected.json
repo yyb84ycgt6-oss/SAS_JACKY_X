@@ -1,0 +1,30 @@
+{
+  "_comment": [
+    "Paths under integrity protection. Any change to a matching file WITHOUT a",
+    "corresponding manifest regeneration fails CI. See GOVERNANCE.md.",
+    "",
+    "Two categories are listed:",
+    "  1. The governance layer itself — so the guard cannot be quietly disarmed.",
+    "  2. Security-critical surfaces — auth, database schema, server-side functions,",
+    "     and secret-handling config, where a silent edit has real blast radius.",
+    "",
+    "Adding or removing a pattern here is itself a protected change."
+  ],
+  "protected": [
+    "LICENSE",
+    "GOVERNANCE.md",
+    ".gitignore",
+    ".github/CODEOWNERS",
+    ".github/workflows/**",
+    ".integrity/protected.json",
+    "scripts/integrity.mjs",
+
+    "supabase/config.toml",
+    "supabase/migrations/**",
+    "supabase/functions/**",
+
+    "src/integrations/supabase/client.ts",
+    "src/hooks/useAuth.tsx",
+    "src/lib/jackie-security.ts"
+  ]
+}

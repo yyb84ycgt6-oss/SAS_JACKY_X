@@ -1,0 +1,73 @@
+name: Integrity Guard
+
+# Tamper-evidence for protected paths. Fails closed: if the guard cannot run,
+# the check does not pass. See GOVERNANCE.md.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Read-only by default. This workflow must never be able to write to the repo —
+# a guard that can push is a guard that can be turned against you.
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify protected paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history so we can diff against the base branch below.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify integrity manifest
+        run: node scripts/integrity.mjs verify
+
+      - name: Report protected paths touched by this PR
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          changed=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" \
+            | grep -E '^(LICENSE|GOVERNANCE\.md|\.gitignore|\.github/|\.integrity/|scripts/integrity\.mjs|supabase/|src/integrations/|src/hooks/useAuth\.tsx|src/lib/jackie-security\.ts)' \
+            || true)
+
+          if [ -z "$changed" ]; then
+            echo "No protected paths touched by this pull request."
+            exit 0
+          fi
+
+          echo "This pull request modifies protected paths:"
+          echo "$changed" | sed 's/^/  /'
+          echo ""
+          echo "The integrity manifest verified, so these changes are recorded as"
+          echo "intentional. They still require Code Owner approval to merge."
+
+          {
+            echo "### Protected paths modified"
+            echo ""
+            echo '```'
+            echo "$changed"
+            echo '```'
+            echo ""
+            echo "Requires Code Owner approval before merge."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "$changed" | while read -r f; do
+            [ -n "$f" ] && echo "::warning file=$f::Protected path — Code Owner approval required"
+          done

@@ -1,0 +1,29 @@
+# CODEOWNERS — mandatory review authority.
+#
+# Paired with a branch ruleset on `main` that has "Require review from Code
+# Owners" enabled, every path below requires the Principal's explicit approval
+# before it can merge. Without that ruleset setting this file is advisory only.
+#
+# See GOVERNANCE.md.
+
+# Default: the Principal owns everything in this repository.
+*                           @yyb84ycgt6-oss
+
+# ── Governance layer ────────────────────────────────────────────────────────
+# Listed explicitly so the intent survives any future narrowing of the default.
+# These are the files that enforce the rules; they must never be editable by an
+# automated contributor acting alone.
+/LICENSE                    @yyb84ycgt6-oss
+/GOVERNANCE.md              @yyb84ycgt6-oss
+/.gitignore                 @yyb84ycgt6-oss
+/.github/                   @yyb84ycgt6-oss
+/.integrity/                @yyb84ycgt6-oss
+/scripts/integrity.mjs      @yyb84ycgt6-oss
+
+# ── Security-critical surfaces ──────────────────────────────────────────────
+# Database schema, server-side functions, and auth. A silent change here has
+# real blast radius: RLS policies, secret handling, and privilege boundaries.
+/supabase/                  @yyb84ycgt6-oss
+/src/integrations/          @yyb84ycgt6-oss
+/src/hooks/useAuth.tsx      @yyb84ycgt6-oss
+/src/lib/jackie-security.ts @yyb84ycgt6-oss

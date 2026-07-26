@@ -1,0 +1,82 @@
+PROPRIETARY SOFTWARE LICENSE
+All Rights Reserved
+
+Copyright (c) 2026 [COPYRIGHT HOLDER — replace with your legal name or
+registered entity; see note at the end of this file]
+
+GitHub identity of record: @yyb84ycgt6-oss
+
+================================================================================
+
+NOTICE
+
+This software and its associated documentation, configuration, database schema,
+assets, and history (collectively, the "Software") are proprietary and
+confidential. The Software is NOT open source. No licence is granted by
+publication, by repository visibility, or by any platform's terms of service.
+
+All rights are reserved by the copyright holder.
+
+================================================================================
+
+1. NO GRANT OF RIGHTS
+
+No permission is granted to any person or system to use, copy, modify, merge,
+publish, distribute, sublicense, sell, train on, or create derivative works
+from the Software, in whole or in part, except by a separate written agreement
+signed by the copyright holder.
+
+2. NO IMPLIED LICENCE FROM ACCESS
+
+Access to the Software — including access granted to a third-party platform,
+integration, contractor, or automated agent for a specific and limited purpose —
+does not constitute a licence. Write access to the repository is a technical
+capability granted for a defined task. It conveys no ownership, no right of
+modification beyond that task, and no right of reuse.
+
+3. AUTOMATED SYSTEMS AND MACHINE LEARNING
+
+The Software may not be used as training data, fine-tuning input, evaluation
+material, or retrieval corpus for any machine learning model or automated
+system without the copyright holder's express written permission.
+
+Automated agents and AI development platforms operating on this repository are
+additionally bound by GOVERNANCE.md, which restricts modification of the
+Software. Where this licence and GOVERNANCE.md both apply, the more restrictive
+provision controls.
+
+4. THIRD-PARTY COMPONENTS
+
+The Software incorporates third-party open-source dependencies, each governed by
+its own licence. Those licences apply to those components only. Nothing in this
+file alters them, and nothing in them grants any right to the Software as a
+whole or to any original work contained in it.
+
+5. CONFIDENTIALITY
+
+The Software includes material the copyright holder treats as confidential,
+including system architecture, prompt design, database schema, and operational
+configuration. Any party granted access shall not disclose it to third parties.
+
+6. NO WARRANTY
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT
+HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+7. TERMINATION
+
+Any use of the Software outside the terms of this licence terminates all
+permissions immediately and automatically, without notice.
+
+================================================================================
+
+ACTION REQUIRED
+
+Replace [COPYRIGHT HOLDER] above with your legal name or registered entity
+before relying on this licence. A copyright notice naming a placeholder is
+weaker in a dispute than one naming an identifiable rights holder. This is the
+one field in this file that cannot be filled in on your behalf.
