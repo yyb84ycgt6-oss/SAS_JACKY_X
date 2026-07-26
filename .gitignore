@@ -12,6 +12,18 @@ dist
 dist-ssr
 *.local
 
+# Secrets — never commit.
+# .env is currently TRACKED and holds only publishable/anon keys, which are
+# designed to be public. It is intentionally NOT force-removed here, since that
+# would break existing local setups. These rules stop any NEW secret file from
+# being committed. See GOVERNANCE.md §6.
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+service-account*.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
