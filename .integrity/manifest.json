@@ -15,6 +15,8 @@
     "supabase/functions/_shared/cors.ts": "4c03edcaada44e821b2c6c2e221ed09ea6734971b794a5130d81bffd6174d8ac",
     "supabase/functions/_shared/crypto.ts": "962ab0d9849884a9b5a2599137dd91a97e21616e01e68fe40d6ab21624326e6d",
     "supabase/functions/_shared/probe.ts": "7901b714c97b6bd2b9d1c7fc43b9ce93abf886392ecad1ffc8164999cfe19645",
+    "supabase/functions/ai-canary/index.ts": "b558afb51bae0782842f31d4f64752621e5fbb5dec63dc76a7570613665a72c9",
+    "supabase/functions/ai-discover/index.ts": "f51e9dea99f7bede30dbe55f3afb4a00a378a0a9d6625618682fd422fd8e7448",
     "supabase/functions/ai-probe/index.ts": "1c5589a6e88116451cdafb7c5d344f524977eb3370c42899d3fd49a8450f02f2",
     "supabase/functions/ai-vault/index.ts": "8ba2a25d97c93f39470058ec9a0af43db800463a6cceb2d14a1d450d2015fdf9",
     "supabase/functions/api-keys/index.ts": "29822a5213325151a7f30506bede2ad0e5bb5f7f9e52418cf07f94e66a76a34b",
@@ -50,6 +52,7 @@
     "supabase/migrations/20260426035114_8963accb-0d17-4b66-bcf9-9d9f9e48dad9.sql": "2742a432be358c3328f4f4f5b5df5e2ac5b72f78bcb3e22be1fee1a40c22c0b4",
     "supabase/migrations/20260427070539_613541ab-2959-46a0-8b49-878abbe02008.sql": "4fe833a45341786c83c24bb63cccf6770c5f221fafc1392e628aa8fc25b14ca3",
     "supabase/migrations/20260727120000_ai_provider_vault.sql": "df93c2a2d12ed36a695afa7b0b95a48c674c02eba491a3ffb7c215441c0d3bb7",
-    "supabase/migrations/20260727130000_ai_fabric_probe_and_safety.sql": "2dcab56fd99602cb0f566be2d9f77866c6ca20ecf697871bbda532cf2b3161ee"
+    "supabase/migrations/20260727130000_ai_fabric_probe_and_safety.sql": "2dcab56fd99602cb0f566be2d9f77866c6ca20ecf697871bbda532cf2b3161ee",
+    "supabase/migrations/20260727140000_ai_fabric_discovery_canary.sql": "b362ea117271b51c701b3f1c91e14df11911ec6d2136dba907c72ec4d994720e"
   }
 }

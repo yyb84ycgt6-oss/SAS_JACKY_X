@@ -192,7 +192,60 @@ reach everything, not policy grants. Fixed the harness, not the migration; real
 Supabase already has this. Recorded here so the next person testing this
 locally doesn't chase a phantom bug.
 
-## Next phases
+## Phase 4 — auto-discovery + canary gate
 
-3. PC desktop shell as `/pc`, on React 18
-4. Auto-discovery with canary promotion
+Replaces the "seed models manually" step from Phase 1 setup with a
+self-maintaining catalog, without weakening the gate that made manual seeding
+safe in the first place: `jackie-route` has refused `canary_passed=false`
+models since day one, and that check is untouched here.
+
+### ai-discover
+
+Calls each enabled, OpenAI-compatible provider's `/models` endpoint using any
+active credential held for that provider (the catalog itself isn't
+user-specific data — only the credential used to fetch it is). New model IDs
+are inserted with `canary_passed=false, discovery_source='auto'` — inert on
+arrival by construction, not by a follow-up step someone could forget to run.
+
+A denylist filters out non-chat endpoints (`embed`, `whisper`, `tts`,
+`dall-e`, `moderation`, `rerank`, …) that share the same `/models` listing on
+several providers, before they ever reach — and waste — canary budget.
+
+### ai-canary
+
+The promotion gate. Three checks per candidate model, run as real calls
+against the provider: does it follow a trivial instruction, get basic
+arithmetic right, and produce a coherent completion. This is not a quality
+bar — it is "does this respond like a working chat model," which is exactly
+enough to catch a 404'd model ID, a name that turns out to be embeddings-only,
+or a provider that silently repointed a model ID at something else.
+
+All three checks must pass for `canary_passed` to flip to `true`. A model
+that fails after `MAX_ATTEMPTS_BEFORE_DISABLE` (3) runs is disabled rather
+than retried forever — a consistently-failing model burning canary calls on
+every scheduled run is its own small cost leak.
+
+### Scheduling
+
+Both call external providers per model/candidate, so — unlike
+`recompute_ai_health()` — they are not scheduled via pg_cron+pg_net from the
+migration; a migration cannot know this project's function URL. Invoke via an
+external scheduler (GitHub Actions cron, Supabase scheduled triggers) with the
+service role key, same pattern as `ai-probe`.
+
+### Verified
+
+Applied on top of Phase 1 + Phase 2 against live Postgres 16: the new columns
+exist with correct defaults, `service_role` can insert discovered models
+(the grant Phase 2 didn't need to add, since nothing wrote new models before
+this), `authenticated` is denied on both insert and update against
+`ai_models`, a freshly discovered model is absent from the routable set until
+`canary_passed` flips, and it appears immediately once it does.
+
+## Next phase
+
+3. PC desktop shell as `/pc`, on React 18 — the remaining item from the
+   original roadmap, deliberately not started in this pass: it is a UI port
+   with a different risk shape than the fabric work above (dependency
+   versions, existing component behavior) rather than a schema/router
+   extension verifiable the same way.
