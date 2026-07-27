@@ -202,7 +202,8 @@ export default function JackieControl() {
         const r = await orchestrate({ prompt: text, kind: k, modelOverride: override || undefined });
         setOrchOut(r.output);
         setOrchMeta(
-          `model=${r.modelUsed} • kind=${r.kind} • ${r.durationMs}ms${r.attemptedFallback ? " • fallback" : ""}`
+          `model=${r.modelUsed}${r.provider ? ` (${r.provider})` : ""} • kind=${r.kind} • ${r.durationMs}ms` +
+          `${r.attemptedFallback ? " • fallback" : ""}${r.legacy ? " • legacy gateway" : ""}`
         );
         appendAudit({
           ts: Date.now(), actor: getRole(), command: `orchestrate(${k})`,
