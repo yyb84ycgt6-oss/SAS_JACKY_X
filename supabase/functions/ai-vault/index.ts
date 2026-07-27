@@ -16,10 +16,9 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { corsHeaders, jsonResponse, preflight } from "../_shared/cors.ts";
+import { jsonResponse, preflight } from "../_shared/cors.ts";
 import { decryptSecret, encryptSecret, keyHint } from "../_shared/crypto.ts";
-
-const TEST_TIMEOUT_MS = 10_000;
+import { probeProviderKey, statusForProbe } from "../_shared/probe.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return preflight();
@@ -130,34 +129,18 @@ serve(async (req) => {
         return jsonResponse({ ok: false, error: "Decryption failed" }, 500);
       }
 
-      const target = provider.base_url + (provider.models_path ?? "/models");
-      const started = Date.now();
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), TEST_TIMEOUT_MS);
+      const result = await probeProviderKey({
+        baseUrl: provider.base_url,
+        modelsPath: provider.models_path,
+        authScheme: provider.auth_scheme,
+        secret: plaintext,
+      });
 
-      let ok = false;
-      let status = 0;
-      let detail = "";
-      try {
-        const headers: Record<string, string> = {};
-        if (provider.auth_scheme === "bearer") headers["Authorization"] = `Bearer ${plaintext}`;
-        else if (provider.auth_scheme === "x-api-key") headers["x-api-key"] = plaintext;
-
-        const resp = await fetch(target, { headers, signal: controller.signal });
-        status = resp.status;
-        ok = resp.ok;
-        if (!ok) detail = (await resp.text()).slice(0, 300);
-      } catch (e) {
-        detail = e instanceof Error ? e.message : "network error";
-      } finally {
-        clearTimeout(timer);
-      }
-
-      const latency = Date.now() - started;
       await admin.from("ai_provider_keys").update({
-        status: ok ? "active" : status === 401 || status === 403 ? "dead" : "rate_limited",
-        last_error: ok ? null : detail.slice(0, 500),
+        status: statusForProbe(result),
+        last_error: result.ok ? null : result.detail?.slice(0, 500) ?? null,
         last_used_at: new Date().toISOString(),
+        last_probed_at: new Date().toISOString(),
       }).eq("id", key_id);
 
       await admin.from("ai_route_events").insert({
@@ -165,13 +148,22 @@ serve(async (req) => {
         provider_slug: provider.slug,
         model_id: "__probe__",
         key_id,
-        outcome: ok ? "ok" : status === 401 || status === 403 ? "auth" : "server",
-        http_status: status,
-        latency_ms: latency,
-        error: ok ? null : detail.slice(0, 500),
+        outcome: result.ok
+          ? "ok"
+          : result.httpStatus === 401 || result.httpStatus === 403
+          ? "auth"
+          : "server",
+        http_status: result.httpStatus || null,
+        latency_ms: result.latencyMs,
+        error: result.ok ? null : result.detail?.slice(0, 500) ?? null,
       });
 
-      return jsonResponse({ ok, http_status: status, latency_ms: latency, detail: ok ? null : detail });
+      return jsonResponse({
+        ok: result.ok,
+        http_status: result.httpStatus,
+        latency_ms: result.latencyMs,
+        detail: result.detail,
+      });
     }
 
     // ── POST /revoke ─────────────────────────────────────────────────────────

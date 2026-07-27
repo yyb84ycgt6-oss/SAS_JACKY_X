@@ -120,8 +120,79 @@ provider terms and is self-defeating — detection costs the entire pool at once
 the opposite of resilience. The fabric maximizes what legitimately-held free
 tiers give you, which across nine providers plus local Ollama is substantial.
 
+## Phase 2 — probes, health cadence, kill switch, budget
+
+Added on top of Phase 1 without touching its schema or router contract.
+
+### Scheduled health sweep
+
+`ai-probe` sweeps up to 50 keys per invocation, oldest-`last_probed_at`-first,
+concurrency-limited to 5. It finds recovered keys proactively instead of
+waiting for a live user request to land on one after its cooldown expires, and
+keeps `health_score` current even when real traffic is light.
+
+Requires the **service role key**, not a user JWT — it reads every user's
+credentials to sweep them, so it is not reachable from the client.
+
+Scheduling, in order of preference:
+1. **pg_cron + pg_net**, enabled automatically if available on your Supabase
+   project (Database → Extensions). The migration schedules
+   `recompute_ai_health()` every 15 minutes via pg_cron directly — no network
+   hop needed for that part.
+2. **External scheduler** otherwise — a GitHub Actions cron or Supabase's own
+   scheduled triggers hitting the `ai-probe` function URL with the service role
+   key. Both extensions are optional; nothing here requires them.
+
+### Kill switch
+
+```sql
+UPDATE public.ai_fabric_settings SET routing_enabled = false, disabled_reason = 'reason here';
+```
+
+`jackie-route` checks this before touching any candidate, credential, or
+upstream — a 503 the moment it's off. `ai-probe` keeps running underneath a
+paused fabric, since the switch stops routing, not observation: health data
+stays current for whenever you flip it back.
+
+Readable by `authenticated` (so the UI can show "routing paused" honestly),
+writable only by `service_role`.
+
+### Per-user budget
+
+Soft cap, `ai_fabric_settings.max_route_events_per_user_per_hour` (default
+200). A caller over the cap gets a clear `429` with `retry_after`, not a
+silent failure three layers deep. This is the backstop against a runaway loop
+burning an entire credential pool in one burst before a human notices — check
+happens before the ladder is even built.
+
+### What testing against a real database caught this round
+
+Applying both migrations to live Postgres 16 — not just reading them — surfaced
+two real permission bugs neither the SQL author nor a syntax check would catch:
+
+1. **`authenticated` could not read `ai_providers`/`ai_models`/`ai_fabric_settings`
+   at all.** A `CREATE POLICY` without a matching table-level `GRANT` is inert in
+   plain Postgres — RLS narrows an existing privilege, it does not create one.
+   `listProviders()` in `src/lib/jackie-providers.ts` would have failed outright.
+2. **`service_role` could not write `ai_provider_keys` or insert
+   `ai_route_events`.** Every edge function needs this on first use. Phase 1's
+   `REVOKE ALL ... FROM anon, authenticated` never granted `service_role`
+   anything explicitly — it was inherited from Supabase's default privilege
+   bootstrap, which is environment state a migration file cannot verify offline.
+
+Both fixed with explicit `GRANT`s in the Phase 2 migration rather than
+continuing to depend on an assumption about inherited environment
+configuration. Re-verified with a 12-point pass covering both bugs, cross-user
+isolation, and every privileged function/table.
+
+One test-harness lesson worth keeping: the first re-test run produced *false*
+failures on the service-role checks, because the local stub `service_role` role
+lacked `BYPASSRLS` — the actual mechanism Supabase's `service_role` uses to
+reach everything, not policy grants. Fixed the harness, not the migration; real
+Supabase already has this. Recorded here so the next person testing this
+locally doesn't chase a phantom bug.
+
 ## Next phases
 
-2. Scheduled probes + health scoring feeding candidate ordering
 3. PC desktop shell as `/pc`, on React 18
-4. Auto-discovery with canary promotion, budget caps, kill switch
+4. Auto-discovery with canary promotion

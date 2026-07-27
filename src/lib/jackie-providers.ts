@@ -117,6 +117,23 @@ export async function listRouteEvents(limit = 100) {
   return data ?? [];
 }
 
+export type FabricSettings = {
+  routing_enabled: boolean;
+  max_route_events_per_user_per_hour: number;
+  disabled_reason: string | null;
+};
+
+/** Kill-switch + budget state. Read-only from the client by design. */
+export async function getFabricSettings(): Promise<FabricSettings> {
+  const { data, error } = await supabase
+    .from("ai_fabric_settings")
+    .select("routing_enabled, max_route_events_per_user_per_hour, disabled_reason")
+    .eq("id", 1)
+    .single();
+  if (error) throw error;
+  return data as FabricSettings;
+}
+
 /** Human-readable explanation of a key's current state. */
 export function describeKeyStatus(k: ProviderKey): string {
   const cooling = k.cooldown_until && new Date(k.cooldown_until) > new Date();

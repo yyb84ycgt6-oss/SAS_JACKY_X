@@ -119,6 +119,42 @@ serve(async (req) => {
 
     const nowIso = new Date().toISOString();
 
+    // ── Kill switch ──────────────────────────────────────────────────────────
+    // Checked before anything else touches a candidate, credential, or upstream.
+    const { data: settings } = await admin
+      .from("ai_fabric_settings")
+      .select("routing_enabled, max_route_events_per_user_per_hour, disabled_reason")
+      .eq("id", 1)
+      .single();
+
+    if (settings && !settings.routing_enabled) {
+      return jsonResponse({
+        error: "Routing is disabled",
+        reason: settings.disabled_reason ?? "Kill switch is active",
+      }, 503);
+    }
+
+    // ── Per-user budget ──────────────────────────────────────────────────────
+    // Soft cap on attempts/hour. A race can let a couple of requests slip past
+    // the exact boundary — acceptable for a safety cap, not a hard security
+    // limit — but a genuine runaway loop is stopped within one window, not
+    // left free to exhaust the entire credential pool before anyone notices.
+    const cap = settings?.max_route_events_per_user_per_hour ?? 200;
+    const windowStart = new Date(Date.now() - 3_600_000).toISOString();
+    const { count: recentCount } = await admin
+      .from("ai_route_events")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("created_at", windowStart);
+
+    if ((recentCount ?? 0) >= cap) {
+      return jsonResponse({
+        error: "Hourly routing budget exceeded",
+        limit: cap,
+        retry_after: 3600,
+      }, 429);
+    }
+
     // ── Build the candidate ladder ──────────────────────────────────────────
     const { data: providers, error: provErr } = await admin
       .from("ai_providers")
