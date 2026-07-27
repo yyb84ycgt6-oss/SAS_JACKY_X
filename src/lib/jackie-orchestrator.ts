@@ -1,6 +1,17 @@
 // Jackie Multi-Model Orchestrator
 // Routes tasks to the best model for the job, with fallback + optional parallel execution.
-// All model calls go through the jackie-orchestrate edge function (never direct from client).
+// All model calls go through an edge function (never direct from client).
+//
+// Transport: calls now land on `jackie-route`, which owns the real failover
+// ladder across every configured provider and credential. The static registry
+// below is retained because it drives the UI in JackieControl and provides the
+// task-kind heuristics; it is no longer the source of truth for what is
+// actually routable — the ai_models table is.
+//
+// While the provider vault is still being populated, `jackie-route` returns 503
+// (no routable candidates). That case degrades to the legacy `jackie-orchestrate`
+// path so the app keeps working throughout the migration rather than going dark
+// the moment this ships.
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -55,7 +66,61 @@ export type OrchestrateResult = {
   output: string;
   attemptedFallback: boolean;
   durationMs: number;
+  /** Upstream that actually served the request, when routed via jackie-route. */
+  provider?: string;
+  /** True when the legacy single-gateway path served this request. */
+  legacy?: boolean;
 };
+
+const ROUTE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/jackie-route`;
+
+/**
+ * Call the multi-provider router. Returns null when no candidates are routable
+ * yet, which is the signal to degrade to the legacy gateway rather than fail.
+ */
+async function routeViaFabric(opts: {
+  prompt: string;
+  system?: string;
+  kind: TaskKind;
+  modelOverride?: string;
+}): Promise<{ output: string; model: string; provider: string; attempt: number } | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error("Not authenticated");
+
+  const messages = [
+    ...(opts.system ? [{ role: "system", content: opts.system }] : []),
+    { role: "user", content: opts.prompt },
+  ];
+
+  const resp = await fetch(ROUTE_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    },
+    body: JSON.stringify({
+      messages,
+      stream: false,
+      kind: opts.kind === "auto" ? undefined : opts.kind,
+      model: opts.modelOverride,
+    }),
+  });
+
+  // 503 = vault not populated yet. Caller degrades instead of surfacing an error.
+  if (resp.status === 503) return null;
+
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error || `Router failed (${resp.status})`);
+
+  const output = data?.choices?.[0]?.message?.content ?? "";
+  return {
+    output,
+    model: resp.headers.get("X-Jackie-Model") ?? opts.modelOverride ?? "unknown",
+    provider: resp.headers.get("X-Jackie-Provider") ?? "unknown",
+    attempt: Number(resp.headers.get("X-Jackie-Attempt") ?? 1),
+  };
+}
 
 export async function orchestrate(opts: {
   prompt: string;
@@ -81,13 +146,35 @@ export async function orchestrate(opts: {
     return (data as { output: string }).output;
   };
 
+  // Preferred path: the provider fabric, which handles failover internally.
+  try {
+    const routed = await routeViaFabric({
+      prompt: opts.prompt, system: opts.system, kind, modelOverride: opts.modelOverride,
+    });
+    if (routed) {
+      return {
+        modelUsed: routed.model,
+        kind,
+        output: routed.output,
+        // The router already walked its ladder; >1 attempt means it fell over.
+        attemptedFallback: routed.attempt > 1,
+        durationMs: Date.now() - started,
+        provider: routed.provider,
+      };
+    }
+  } catch {
+    // Router reachable but failed outright — fall through to the legacy path
+    // rather than dropping the user's request on the floor.
+  }
+
+  // Legacy path: single gateway, static primary/fallback pair.
   try {
     const output = await invoke(primary.id);
-    return { modelUsed: primary.id, kind, output, attemptedFallback, durationMs: Date.now() - started };
+    return { modelUsed: primary.id, kind, output, attemptedFallback, durationMs: Date.now() - started, legacy: true };
   } catch (e) {
     attemptedFallback = true;
     const output = await invoke(fallback.id);
-    return { modelUsed: fallback.id, kind, output, attemptedFallback, durationMs: Date.now() - started };
+    return { modelUsed: fallback.id, kind, output, attemptedFallback, durationMs: Date.now() - started, legacy: true };
   }
 }
 

@@ -12,6 +12,9 @@
     "src/integrations/supabase/client.ts": "b0ca77b4eaebb21dda36ab152d6b6b7f4718031a5bbec12d101ddb88967efd83",
     "src/lib/jackie-security.ts": "c09acb3f5dc1c8a02c36a42ddd3d819b2954ee9278ad831efe9da7157f5bf885",
     "supabase/config.toml": "1b6bb817c37448f260e931aa9c04f9a30ecb9868c328bdc5693e243c5fbfda56",
+    "supabase/functions/_shared/cors.ts": "4c03edcaada44e821b2c6c2e221ed09ea6734971b794a5130d81bffd6174d8ac",
+    "supabase/functions/_shared/crypto.ts": "962ab0d9849884a9b5a2599137dd91a97e21616e01e68fe40d6ab21624326e6d",
+    "supabase/functions/ai-vault/index.ts": "22e090cafc3fdabf7e45f9c9bfb5d25751ed3e6cb606ceac6598d9a660b89917",
     "supabase/functions/api-keys/index.ts": "29822a5213325151a7f30506bede2ad0e5bb5f7f9e52418cf07f94e66a76a34b",
     "supabase/functions/bot-generate/index.ts": "88830de5b0b64480f374baf32188cdab86e262d2458ed0aa2ddb77940f03b4bf",
     "supabase/functions/game-transaction/index.ts": "3b1682c33d4aa8e7021ffd0bbd5b718d8ecc7cf8efc30cb74fc3550e08d7d999",
@@ -22,6 +25,7 @@
     "supabase/functions/jackie-image/index.ts": "bedab60686e12d133e8b539550a6569c01d7993ee3d79fa81e253b7b0efdecd5",
     "supabase/functions/jackie-langcheck/index.ts": "ec11c5f000625b9d414b21e327deae68689e3212c0b6b70175d8c23ca1880994",
     "supabase/functions/jackie-orchestrate/index.ts": "136068a51ec9b90aa337724872bacd56d4e193081b2aebfb25782c320a5e7843",
+    "supabase/functions/jackie-route/index.ts": "c4d26ba862335502e1a1de709d183edec88dd7a9b3b23d3a87297efc8dcf29dc",
     "supabase/functions/telegram-validate/index.ts": "94f6616860e2e7758acc70856050c9b4b6cf9f25c9f9744c6a6e2be8bf203df0",
     "supabase/migrations/20260314044403_1b28b68e-5622-4a83-8012-6f38f1629d26.sql": "004d9043babaa9b7dc699e89d9fd72de584c7c9cbc0edbb16f3dec2401d2279d",
     "supabase/migrations/20260326230832_7ec38b4e-59b5-4b7c-96ea-e08e3ed617ff.sql": "9625598b29f68ff09ecbb4cc5d816513d345d57f660300a88c9f92f41ca74162",
@@ -42,6 +46,7 @@
     "supabase/migrations/20260412094034_d50db4e2-85db-4346-b778-50981a66c3cf.sql": "0c01cb25137db6440a0bc2d6eea8efa7350012e5a95ed29f996818ddd1b75ea9",
     "supabase/migrations/20260426035025_b090a5b8-b1d3-49cc-a2c7-575f015cea3e.sql": "e24ae641ea2d6f422a6c8ec355152547e17904e5c36c06a2b27b5de295b5ff4d",
     "supabase/migrations/20260426035114_8963accb-0d17-4b66-bcf9-9d9f9e48dad9.sql": "2742a432be358c3328f4f4f5b5df5e2ac5b72f78bcb3e22be1fee1a40c22c0b4",
-    "supabase/migrations/20260427070539_613541ab-2959-46a0-8b49-878abbe02008.sql": "4fe833a45341786c83c24bb63cccf6770c5f221fafc1392e628aa8fc25b14ca3"
+    "supabase/migrations/20260427070539_613541ab-2959-46a0-8b49-878abbe02008.sql": "4fe833a45341786c83c24bb63cccf6770c5f221fafc1392e628aa8fc25b14ca3",
+    "supabase/migrations/20260727120000_ai_provider_vault.sql": "df93c2a2d12ed36a695afa7b0b95a48c674c02eba491a3ffb7c215441c0d3bb7"
   }
 }
